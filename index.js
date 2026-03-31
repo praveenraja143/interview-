@@ -1,2 +1,2 @@
-// Entry point for deployment (Render, Railway, etc.)
+// Entry point - redirects to actual server
 require('./server/server.js');
