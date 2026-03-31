@@ -68,13 +68,26 @@ router.post('/upload/:jobId', protect, upload.single('resume'), async (req, res)
 
         if (ext === '.pdf') {
             const dataBuffer = fs.readFileSync(filePath);
-            const parseFn = typeof pdfParse === 'function' ? pdfParse : (pdfParse.default || pdfParse.PDFParse || pdfParse.pdfParse);
-            if (typeof parseFn !== 'function') {
-                // Try Mammoth or plain text if pdfParse utterly fails
-                resumeText = "PDF parsing library failed. Assuming empty text for fallback.";
-            } else {
-                const pdfData = await parseFn(dataBuffer);
-                resumeText = pdfData.text;
+            
+            try {
+                // Support for pdf-parse v2.4.5+ (mehmet-kozan)
+                const PDFParseClass = pdfParse.PDFParse || (typeof pdfParse === 'function' ? null : pdfParse.default);
+                
+                if (PDFParseClass && typeof PDFParseClass === 'function') {
+                    const parser = new PDFParseClass({ data: dataBuffer });
+                    const result = await parser.getText();
+                    resumeText = result.text;
+                    if (parser.destroy) await parser.destroy();
+                } else if (typeof pdfParse === 'function') {
+                    // Support for older pdf-parse (v1.1.1)
+                    const data = await pdfParse(dataBuffer);
+                    resumeText = data.text;
+                } else {
+                    throw new Error('No valid PDF parser found');
+                }
+            } catch (err) {
+                console.error('PDF Parse Error:', err);
+                resumeText = "PDF parsing failed. Please ensure the file is not corrupted.";
             }
         } else if (ext === '.txt') {
             resumeText = fs.readFileSync(filePath, 'utf-8');
