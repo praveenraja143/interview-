@@ -1,0 +1,21 @@
+[dotenv@17.3.1] injecting env (8) from .env -- tip: ≡ƒöÉ encrypt with Dotenvx: https://dotenvx.com
+[dotenv@17.3.1] injecting env (0) from .env -- tip: ΓÜÖ∩╕Å  write to custom object with { processEnv: myObject }
+[dotenv@17.3.1] injecting env (0) from .env -- tip: ΓÜÖ∩╕Å  load multiple .env files with { path: ['.env.local', '.env'] }
+[dotenv@17.3.1] injecting env (0) from .env -- tip: ΓÜÖ∩╕Å  load multiple .env files with { path: ['.env.local', '.env'] }
+[dotenv@17.3.1] injecting env (0) from .env -- tip: ≡ƒöÉ prevent building .env in docker: https://dotenvx.com/prebuild
+[dotenv@17.3.1] injecting env (0) from .env -- tip: ≡ƒöÉ encrypt with Dotenvx: https://dotenvx.com
+≡ƒöä Starting in-memory MongoDB server...
+Γ£à MongoDB Connected (In-Memory)
+Γ£à Admin account created: iqignite-yugenfest26@jkkmct.edu.in
+
+    ΓòöΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòù
+    Γòæ   ≡ƒñû AI Interview Platform Running!      Γòæ
+    Γòæ   ≡ƒôí Port: 3000                          Γòæ
+    Γòæ   ≡ƒîÉ http://localhost:3000               Γòæ
+    Γòæ   ≡ƒ¢í∩╕Å  Crash protection: ENABLED           Γòæ
+    ΓòÜΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓò¥
+            
+RESUME UPLOAD ERROR: TypeError: next is not a function
+    at model.<anonymous> (D:\interview\server\models\RoundResult.js:53:5)
+    at Kareem.execPre (D:\interview\node_modules\kareem\index.js:68:39)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
