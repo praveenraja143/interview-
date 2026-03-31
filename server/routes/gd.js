@@ -120,6 +120,7 @@ router.post('/:jobId/submit', protect, async (req, res) => {
         res.json({
             message: 'GD round submitted',
             score: analysis.score,
+            passed: analysis.score >= 50,
             details: analysis.details,
             feedback: analysis.feedback
         });

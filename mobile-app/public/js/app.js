@@ -521,7 +521,7 @@ async function handleResumeUpload(e) {
         showToast(`Resume uploaded! ATS Score: ${data.atsScore}%`, 'success');
 
         // Show results
-        showResults(data.atsScore, data.atsScore >= 50, data.feedback, {
+        showResults(data.atsScore, data.passed, data.feedback, {
             'Skill Match': data.details.skillMatch + '%',
             'Experience Match': data.details.experienceMatch + '%',
             'Education Match': data.details.educationMatch + '%',
@@ -781,7 +781,7 @@ async function submitExam(round) {
         breakdown['Correct MCQs'] = data.correct;
         breakdown['Total Questions'] = data.total;
 
-        showResults(data.score, data.score >= 50, 
+        showResults(data.score, data.passed, 
             `You scored ${data.score}% overall.`, 
             breakdown
         );
@@ -914,7 +914,7 @@ window.submitGD = async () => {
             totalSessionTime: 900
         });
 
-        showResults(data.score, data.score >= 50, data.feedback, {
+        showResults(data.score, data.passed, data.feedback, {
             'Confidence': data.details.confidenceScore + '%',
             'Response Speed': data.details.responseSpeed + '%',
             'Content Quality': data.details.contentQuality + '%',
@@ -1123,7 +1123,7 @@ async function finishInterview() {
             duration: 900
         });
 
-        showResults(data.score, data.score >= 50, data.feedback, {
+        showResults(data.score, data.passed, data.feedback, {
             'Facial Confidence': data.details.facialConfidence + '%',
             'Body Language': data.details.bodyLanguage + '%',
             'Answer Quality': data.details.answerQuality + '%',

@@ -125,6 +125,7 @@ router.post('/:jobId/submit', protect, async (req, res) => {
         res.json({
             message: 'Aptitude test submitted',
             score,
+            passed: score >= 50,
             correct,
             total: questions.length
         });

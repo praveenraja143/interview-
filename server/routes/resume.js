@@ -155,6 +155,7 @@ router.post('/upload/:jobId', protect, upload.single('resume'), async (req, res)
         res.status(201).json({
             message: 'Resume uploaded and analyzed successfully',
             atsScore: atsResult.score,
+            passed: atsResult.score >= 50,
             details: atsResult.details,
             feedback: atsResult.feedback
         });

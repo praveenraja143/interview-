@@ -5,30 +5,37 @@ class EliminationEngine {
     calculateKeepCount(totalApplicants, totalPositions, eliminationRatio, round) {
         // Calculate how many candidates to keep after this round
         const keepPercentage = eliminationRatio / 100;
-        let keepCount = Math.ceil(totalApplicants * keepPercentage);
+        // Keep at least totalPositions, or all applicants if there are fewer than totalPositions.
+        // We'll also use the ratio as the baseline to filter out excessive applicants early.
+        let targetKeep = Math.ceil(totalApplicants * keepPercentage);
         
-        // Never keep less than totalPositions, but keep at least 1 if there are applicants
-        if (keepCount < totalPositions) {
-            keepCount = totalPositions;
-        }
+        // Ensure we never keep less than we have positions for, but also don't "invent" people
+        let finalKeep = Math.max(targetKeep, totalPositions);
+        
+        // Final sanity check: cannot keep more than total applicants
+        finalKeep = Math.min(finalKeep, totalApplicants);
+        
+        // If there are people, at least one MUST stay (provided their score is not terrible)
+        if (totalApplicants > 0 && finalKeep === 0) finalKeep = 1;
 
-        if (totalApplicants > 0 && keepCount === 0) {
-            keepCount = 1;
-        }
-        
-        return keepCount;
+        return finalKeep;
     }
 
     eliminateByScore(results, keepCount) {
         // Sort by score descending
         const sorted = [...results].sort((a, b) => b.score - a.score);
         
-        return sorted.map((result, index) => ({
-            ...result,
-            rank: index + 1,
-            passed: index < keepCount,
-            eliminatedAt: index >= keepCount ? new Date() : null
-        }));
+        return sorted.map((result, index) => {
+            // Strictly base passing on the rank (top N as defined by keepCount)
+            const passed = index < keepCount;
+
+            return {
+                ...result,
+                rank: index + 1,
+                passed: passed,
+                eliminatedAt: !passed ? new Date() : null
+            };
+        });
     }
 
     calculateRoundProgression(totalApplicants, totalPositions, eliminationRatios) {

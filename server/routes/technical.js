@@ -177,6 +177,7 @@ router.post('/:jobId/submit', protect, async (req, res) => {
         res.json({
             message: 'Technical test submitted',
             score: finalScore,
+            passed: finalScore >= 50,
             correct: mcqCorrect,
             total: questions.length,
             details: { mcqScore, codeScore: avgCodeScore }
