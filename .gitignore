@@ -1,0 +1,7 @@
+node_modules/
+.env
+uploads/
+mobile-app/node_modules/
+mobile-app/android/
+test-server.log
+__pycache__/

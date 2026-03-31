@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="AI-powered interview platform that automates hiring with resume screening, aptitude tests, technical rounds, group discussions, and one-on-one video interviews.">
+    <title>AI Interview Platform | Automated Hiring System</title>
+    <link rel="stylesheet" href="/css/styles.css">
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+    <!-- Animated Background -->
+    <div class="bg-animation">
+        <div class="orb"></div>
+        <div class="orb"></div>
+        <div class="orb"></div>
+    </div>
+
+    <div class="app-container">
+        <!-- Navigation -->
+        <nav class="navbar" id="navbar">
+            <a href="#" class="navbar-brand" onclick="showPage('landing')">
+                <div class="logo-icon">🤖</div>
+                <h1>AI Interview</h1>
+            </a>
+            <div class="navbar-nav" id="navActions">
+                <button class="nav-btn primary" onclick="showPage('auth')">Get Started</button>
+            </div>
+        </nav>
+
+        <!-- Toast Container -->
+        <div class="toast-container" id="toastContainer"></div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            
+            <!-- ========== LANDING PAGE ========== -->
+            <div class="page active" id="page-landing">
+                <div class="hero">
+                    <div class="hero-badge">
+                        <span>AI-Powered Hiring Platform</span>
+                    </div>
+                    <h2>
+                        Smart Hiring with<br>
+                        <span class="gradient-text">Artificial Intelligence</span>
+                    </h2>
+                    <p>Automate your entire interview process — from resume screening to final selection. Let AI evaluate candidates through aptitude tests, group discussions, and video interviews.</p>
+                    <div class="hero-actions">
+                        <button class="btn btn-primary btn-lg" onclick="showPage('auth')">🚀 Start Hiring</button>
+                        <button class="btn btn-secondary btn-lg" onclick="showPage('auth')">📋 Apply for Jobs</button>
+                    </div>
+                </div>
+
+                <div class="features-grid">
+                    <div class="card feature-card">
+                        <div class="icon">📄</div>
+                        <h3>ATS Resume Screening</h3>
+                        <p>AI-powered resume analysis that matches skills, experience, and education to job requirements.</p>
+                    </div>
+                    <div class="card feature-card">
+                        <div class="icon">🧠</div>
+                        <h3>Aptitude & Technical Tests</h3>
+                        <p>Automated MCQ-based assessments with real-time scoring and time tracking.</p>
+                    </div>
+                    <div class="card feature-card">
+                        <div class="icon">🗣️</div>
+                        <h3>AI Group Discussion</h3>
+                        <p>Voice-based evaluation analyzing confidence, response speed, and content quality.</p>
+                    </div>
+                    <div class="card feature-card">
+                        <div class="icon">🎥</div>
+                        <h3>Video Interview</h3>
+                        <p>One-on-one AI interview analyzing facial confidence, body language, and answer quality.</p>
+                    </div>
+                    <div class="card feature-card">
+                        <div class="icon">⚡</div>
+                        <h3>Smart Elimination</h3>
+                        <p>Automatic round-by-round candidate elimination based on configurable ratios.</p>
+                    </div>
+                    <div class="card feature-card">
+                        <div class="icon">📧</div>
+                        <h3>Email Notifications</h3>
+                        <p>Instant results to candidates and detailed reports to admins after each round.</p>
+                    </div>
+                </div>
+
+                <div class="process-flow">
+                    <h2><span class="gradient-text">How It Works</span></h2>
+                    <div class="process-steps">
+                        <div class="process-step">
+                            <div class="step-number">1</div>
+                            <h4>Upload Resume</h4>
+                            <p>Apply & upload resume</p>
+                        </div>
+                        <div class="process-step">
+                            <div class="step-number">2</div>
+                            <h4>ATS Screening</h4>
+                            <p>AI scans resume</p>
+                        </div>
+                        <div class="process-step">
+                            <div class="step-number">3</div>
+                            <h4>Aptitude Test</h4>
+                            <p>Online MCQ test</p>
+                        </div>
+                        <div class="process-step">
+                            <div class="step-number">4</div>
+                            <h4>Technical Round</h4>
+                            <p>Skills assessment</p>
+                        </div>
+                        <div class="process-step">
+                            <div class="step-number">5</div>
+                            <h4>Group Discussion</h4>
+                            <p>Voice AI analysis</p>
+                        </div>
+                        <div class="process-step">
+                            <div class="step-number">6</div>
+                            <h4>1-on-1 Interview</h4>
+                            <p>Video AI analysis</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========== AUTH PAGE ========== -->
+            <div class="page" id="page-auth">
+                <div class="auth-container">
+                    <div class="card">
+                        <h2>Welcome 👋</h2>
+                        <p class="subtitle">Sign in to continue or create a new account</p>
+                        
+                        <div class="auth-tabs">
+                            <button class="auth-tab active" onclick="toggleAuthTab('login')">Login</button>
+                            <button class="auth-tab" onclick="toggleAuthTab('register')">Register</button>
+                        </div>
+
+                        <!-- Login Form -->
+                        <form id="loginForm" onsubmit="handleLogin(event)">
+                            <div class="form-group">
+                                <label>Email Address</label>
+                                <input type="email" class="form-control" id="loginEmail" placeholder="you@example.com" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Password</label>
+                                <input type="password" class="form-control" id="loginPassword" placeholder="Enter your password" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary" style="width:100%">Sign In</button>
+                        </form>
+
+                        <!-- Register Form -->
+                        <form id="registerForm" style="display:none" onsubmit="handleRegister(event)">
+                            <div class="form-group">
+                                <label>Full Name</label>
+                                <input type="text" class="form-control" id="regName" placeholder="John Doe" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Email Address</label>
+                                <input type="email" class="form-control" id="regEmail" placeholder="you@example.com" required>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Password</label>
+                                    <input type="password" class="form-control" id="regPassword" placeholder="Min 6 characters" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Phone</label>
+                                    <input type="tel" class="form-control" id="regPhone" placeholder="+91 XXXXX">
+                                </div>
+                            </div>
+                            <input type="hidden" id="regRole" value="candidate">
+                            <button type="submit" class="btn btn-primary" style="width:100%">Create Account</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========== CANDIDATE DASHBOARD ========== -->
+            <div class="page" id="page-candidate">
+                <div class="dashboard-header">
+                    <div>
+                        <h2>My Dashboard</h2>
+                        <p style="color:var(--text-muted)">Welcome back! Browse and apply for jobs.</p>
+                    </div>
+                </div>
+
+                <div class="stats-grid" id="candidateStats">
+                    <div class="card stat-card">
+                        <div class="stat-icon">📋</div>
+                        <div class="stat-value" id="statApplied">0</div>
+                        <div class="stat-label">Jobs Applied</div>
+                    </div>
+                    <div class="card stat-card">
+                        <div class="stat-icon">✅</div>
+                        <div class="stat-value" id="statPassed">0</div>
+                        <div class="stat-label">Rounds Passed</div>
+                    </div>
+                    <div class="card stat-card">
+                        <div class="stat-icon">🎯</div>
+                        <div class="stat-value" id="statCurrentRound">-</div>
+                        <div class="stat-label">Current Round</div>
+                    </div>
+                    <div class="card stat-card">
+                        <div class="stat-icon">⭐</div>
+                        <div class="stat-value" id="statAvgScore">0</div>
+                        <div class="stat-label">Avg Score</div>
+                    </div>
+                </div>
+
+                <h3 style="margin-bottom:20px">Available Jobs</h3>
+                <div class="jobs-grid" id="candidateJobsList"></div>
+            </div>
+
+            <!-- ========== ADMIN DASHBOARD ========== -->
+            <div class="page" id="page-admin">
+                <div class="dashboard-header">
+                    <div>
+                        <h2>Admin Dashboard</h2>
+                        <p style="color:var(--text-muted)">Manage jobs and monitor interview rounds.</p>
+                    </div>
+                    <button class="btn btn-primary" onclick="openCreateJobModal()">+ Create Job</button>
+                </div>
+
+                <div class="stats-grid" id="adminStats">
+                    <div class="card stat-card">
+                        <div class="stat-icon">💼</div>
+                        <div class="stat-value" id="statTotalJobs">0</div>
+                        <div class="stat-label">Total Jobs</div>
+                    </div>
+                    <div class="card stat-card">
+                        <div class="stat-icon">👥</div>
+                        <div class="stat-value" id="statTotalApplicants">0</div>
+                        <div class="stat-label">Total Applicants</div>
+                    </div>
+                    <div class="card stat-card">
+                        <div class="stat-icon">🔄</div>
+                        <div class="stat-value" id="statActiveRounds">0</div>
+                        <div class="stat-label">Active Rounds</div>
+                    </div>
+                    <div class="card stat-card">
+                        <div class="stat-icon">✅</div>
+                        <div class="stat-value" id="statSelected">0</div>
+                        <div class="stat-label">Selected</div>
+                    </div>
+                </div>
+
+                <h3 style="margin-bottom:20px">Job Listings</h3>
+                <div class="jobs-grid" id="adminJobsList"></div>
+            </div>
+
+            <!-- ========== APTITUDE TEST PAGE ========== -->
+            <div class="page" id="page-aptitude">
+                <div class="exam-container">
+                    <div class="exam-header">
+                        <div>
+                            <h3>🧠 Aptitude Test</h3>
+                            <p style="color:var(--text-muted);font-size:13px" id="aptJobTitle"></p>
+                        </div>
+                        <div class="timer" id="aptTimer">30:00</div>
+                    </div>
+
+                    <div class="progress-bar" style="margin-bottom:24px">
+                        <div class="progress-fill" id="aptProgress" style="width:0%"></div>
+                    </div>
+
+                    <div id="aptQuestionContainer"></div>
+
+                    <div class="question-dots" id="aptDots"></div>
+
+                    <div class="question-nav">
+                        <button class="btn btn-secondary" id="aptPrevBtn" onclick="aptPrevQuestion()">← Previous</button>
+                        <button class="btn btn-primary" id="aptNextBtn" onclick="aptNextQuestion()">Next →</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========== TECHNICAL TEST PAGE ========== -->
+            <div class="page" id="page-technical">
+                <div class="exam-container">
+                    <div class="exam-header">
+                        <div>
+                            <h3>💻 Technical Round</h3>
+                            <p style="color:var(--text-muted);font-size:13px" id="techJobTitle"></p>
+                        </div>
+                        <div class="timer" id="techTimer">45:00</div>
+                    </div>
+
+                    <div class="progress-bar" style="margin-bottom:24px">
+                        <div class="progress-fill" id="techProgress" style="width:0%"></div>
+                    </div>
+
+                    <div id="techQuestionContainer"></div>
+
+                    <div class="question-dots" id="techDots"></div>
+
+                    <div class="question-nav">
+                        <button class="btn btn-secondary" id="techPrevBtn" onclick="techPrevQuestion()">← Previous</button>
+                        <button class="btn btn-primary" id="techNextBtn" onclick="techNextQuestion()">Next →</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========== GROUP DISCUSSION PAGE ========== -->
+            <div class="page" id="page-gd">
+                <div class="gd-container">
+                    <div class="exam-header">
+                        <div>
+                            <h3>🗣️ Group Discussion</h3>
+                            <p style="color:var(--text-muted);font-size:13px" id="gdJobTitle"></p>
+                        </div>
+                        <div class="timer" id="gdTimer">15:00</div>
+                    </div>
+
+                    <div class="card gd-topic-card">
+                        <h3>Discussion Topic</h3>
+                        <div class="topic-text" id="gdTopic">Loading...</div>
+                    </div>
+
+                    <div class="card" style="text-align:center;padding:32px">
+                        <div class="voice-visualizer" id="voiceVisualizer" style="display:none">
+                            <div class="voice-bar"></div>
+                            <div class="voice-bar"></div>
+                            <div class="voice-bar"></div>
+                            <div class="voice-bar"></div>
+                            <div class="voice-bar"></div>
+                            <div class="voice-bar"></div>
+                            <div class="voice-bar"></div>
+                            <div class="voice-bar"></div>
+                        </div>
+
+                        <div class="recording-status" id="recordingStatus" style="display:none">
+                            <div class="recording-dot"></div>
+                            <span>Recording your response...</span>
+                        </div>
+
+                        <button class="btn btn-primary btn-lg" id="gdStartBtn" onclick="startGDRecording()">
+                            🎤 Start Speaking
+                        </button>
+                        <button class="btn btn-danger btn-lg" id="gdStopBtn" style="display:none" onclick="stopGDRecording()">
+                            ⏹️ Stop Recording
+                        </button>
+
+                        <div class="speech-transcript" id="gdTranscript" style="display:none">
+                            <p style="color:var(--text-muted);font-size:12px;margin-bottom:8px">Your speech transcript:</p>
+                            <div id="gdTranscriptText"></div>
+                        </div>
+
+                        <button class="btn btn-success btn-lg" id="gdSubmitBtn" style="display:none;margin-top:16px" onclick="submitGD()">
+                            ✅ Submit Response
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========== ONE-ON-ONE INTERVIEW PAGE ========== -->
+            <div class="page" id="page-interview">
+                <div class="interview-container">
+                    <div class="exam-header">
+                        <div>
+                            <h3>🎥 One-on-One Interview</h3>
+                            <p style="color:var(--text-muted);font-size:13px" id="intJobTitle"></p>
+                        </div>
+                        <div class="timer" id="intTimer">20:00</div>
+                    </div>
+
+                    <div class="interview-grid">
+                        <div class="video-panel ai-interviewer">
+                            <div class="ai-avatar-container">
+                                <img src="/images/ai_avatar.png" alt="AI Interviewer" class="hologram-avatar" id="aiAvatarImg">
+                            </div>
+                            <h3>AI Interviewer</h3>
+                            <p class="ai-speaking" id="aiSpeaking">Ready to begin...</p>
+                        </div>
+                        <div class="video-panel" id="candidateVideoPanel">
+                            <video id="candidateVideo" autoplay muted playsinline></video>
+                            <div class="video-label">You</div>
+                        </div>
+                    </div>
+
+                    <div class="interview-question-display" id="intQuestionDisplay">
+                        <h4>Question <span id="intQuestionNum">1</span> of <span id="intTotalQuestions">5</span></h4>
+                        <p id="intQuestionText">Click "Start Interview" to begin.</p>
+                    </div>
+
+                    <div class="face-metrics" id="faceMetrics" style="display:none">
+                        <div class="metric-card">
+                            <div class="metric-value" id="metricEyeContact">--</div>
+                            <div class="metric-label">Eye Contact</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value" id="metricConfidence">--</div>
+                            <div class="metric-label">Confidence</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value" id="metricPosture">--</div>
+                            <div class="metric-label">Posture</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value" id="metricSpeech">--</div>
+                            <div class="metric-label">Speech</div>
+                        </div>
+                    </div>
+
+                    <div style="text-align:center">
+                        <button class="btn btn-primary btn-lg" id="intStartBtn" onclick="startInterview()">
+                            🎬 Start Interview
+                        </button>
+                        <button class="btn btn-success btn-lg" id="intAnswerBtn" style="display:none" onclick="startAnswering()">
+                            🎤 Start Answering
+                        </button>
+                        <button class="btn btn-danger btn-lg" id="intStopBtn" style="display:none" onclick="stopAnswering()">
+                            ⏹️ Stop
+                        </button>
+                        <button class="btn btn-primary btn-lg" id="intNextBtn" style="display:none" onclick="nextInterviewQuestion()">
+                            Next Question →
+                        </button>
+                    </div>
+
+                    <div class="speech-transcript" id="intTranscript" style="display:none;margin-top:20px">
+                        <p style="color:var(--text-muted);font-size:12px;margin-bottom:8px">Your answer:</p>
+                        <div id="intTranscriptText"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========== RESULTS PAGE ========== -->
+            <div class="page" id="page-results">
+                <div class="result-card card" id="resultsContainer">
+                    <div class="score-circle" id="resultScoreCircle">
+                        <div class="inner">
+                            <div class="score-value" id="resultScore">0</div>
+                            <div class="score-label">Score</div>
+                        </div>
+                    </div>
+                    <div class="result-status" id="resultStatus">Processing...</div>
+                    <p style="color:var(--text-muted);margin-bottom:24px" id="resultFeedback"></p>
+                    <div class="score-breakdown" id="resultBreakdown"></div>
+                    <div style="margin-top:24px">
+                        <button class="btn btn-primary" onclick="goToDashboard()">Back to Dashboard</button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    <!-- ========== PROCTORING CAMERA OVERLAY ========== -->
+    <div class="proctor-camera" id="proctorCamera" style="display:none">
+        <video id="proctorVideo" autoplay muted playsinline></video>
+        <div class="proctor-label">🔴 LIVE</div>
+    </div>
+
+    <!-- ========== TAB SWITCH WARNING ========== -->
+    <div class="modal-overlay" id="tabWarningModal" style="z-index:10000">
+        <div class="modal" style="max-width:450px;text-align:center;">
+            <div style="font-size:64px;margin-bottom:16px">⚠️</div>
+            <h3 style="color:var(--danger);margin-bottom:12px">Tab Switch Detected!</h3>
+            <p style="color:var(--text-muted);margin-bottom:8px">You left the exam page. This is a serious violation.</p>
+            <div class="tab-warn-count" id="tabWarnCount" style="font-size:28px;font-weight:700;color:var(--accent);margin:16px 0">Warning 1 / 2</div>
+            <p style="color:var(--danger);font-size:13px;margin-bottom:20px">One more violation will <strong>DISQUALIFY</strong> you automatically.</p>
+            <button class="btn btn-primary" onclick="dismissTabWarning()">I Understand, Continue</button>
+        </div>
+    </div>
+
+    <!-- ========== DISQUALIFICATION OVERLAY ========== -->
+    <div class="modal-overlay" id="disqualifiedModal" style="z-index:10001">
+        <div class="modal" style="max-width:450px;text-align:center;">
+            <div style="font-size:64px;margin-bottom:16px">🚫</div>
+            <h3 style="color:var(--danger);margin-bottom:12px;font-size:24px">DISQUALIFIED</h3>
+            <p style="color:var(--text-muted);margin-bottom:20px">You have been disqualified for leaving the exam page multiple times. This is to maintain exam integrity.</p>
+            <p style="color:var(--danger);font-size:13px;margin-bottom:20px">Your scores have been submitted as 0.</p>
+            <button class="btn btn-secondary" onclick="goToDashboard()">Back to Dashboard</button>
+        </div>
+    </div>
+
+    <!-- ========== CREATE JOB MODAL ========== -->
+    <div class="modal-overlay" id="createJobModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Create New Job</h3>
+                <button class="modal-close" onclick="closeModal('createJobModal')">✕</button>
+            </div>
+            <div class="modal-body">
+                <form id="createJobForm" onsubmit="handleCreateJob(event)">
+                    <div class="form-group">
+                        <label>Job Title</label>
+                        <input type="text" class="form-control" id="jobTitle" placeholder="e.g. Full Stack Developer" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea class="form-control" id="jobDescription" placeholder="Describe the role and responsibilities" required></textarea>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Company Name</label>
+                            <input type="text" class="form-control" id="jobCompany" placeholder="Company Name" value="Our Company">
+                        </div>
+                        <div class="form-group">
+                            <label>Total Positions</label>
+                            <input type="number" class="form-control" id="jobPositions" placeholder="5" value="5" min="1" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Max Applicants Limit</label>
+                        <input type="number" class="form-control" id="jobMaxApplicants" placeholder="100" value="100" min="1">
+                        <small style="color:var(--text-muted);font-size:11px">Maximum number of candidates who can apply for this job</small>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Required Skills (comma separated)</label>
+                            <input type="text" class="form-control" id="jobSkills" placeholder="JavaScript, React, Node.js">
+                        </div>
+                        <div class="form-group">
+                            <label>Min Experience (years)</label>
+                            <input type="number" class="form-control" id="jobExperience" value="0" min="0">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Education Requirement</label>
+                        <select class="form-control" id="jobEducation">
+                            <option value="">Any</option>
+                            <option value="bachelor">Bachelor's Degree</option>
+                            <option value="master">Master's Degree</option>
+                            <option value="phd">PhD</option>
+                            <option value="diploma">Diploma</option>
+                        </select>
+                    </div>
+                    <div class="form-row" style="margin-top:16px;">
+                        <div class="form-group">
+                            <label>Start Date</label>
+                            <input type="date" class="form-control" id="jobStartDate" required>
+                        </div>
+                        <div class="form-group">
+                            <label>End Date</label>
+                            <input type="date" class="form-control" id="jobEndDate" required>
+                        </div>
+                    </div>
+                    <div style="margin-top:20px">
+                        <h4 style="font-size:14px;margin-bottom:12px;color:var(--accent-light)">Elimination Ratios (% to keep per round)</h4>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>ATS Round</label>
+                                <input type="number" class="form-control" id="ratioAts" value="50" min="10">
+                            </div>
+                            <div class="form-group">
+                                <label>Aptitude Round</label>
+                                <input type="number" class="form-control" id="ratioAptitude" value="60" min="10">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Technical Round</label>
+                                <input type="number" class="form-control" id="ratioTechnical" value="50" min="10">
+                            </div>
+                            <div class="form-group">
+                                <label>GD Round</label>
+                                <input type="number" class="form-control" id="ratioGd" value="50" min="10">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer" style="padding:16px 0 0">
+                        <button type="button" class="btn btn-secondary" onclick="closeModal('createJobModal')">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Create Job</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== RESUME UPLOAD MODAL ========== -->
+    <div class="modal-overlay" id="uploadResumeModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Apply for Job</h3>
+                <button class="modal-close" onclick="closeModal('uploadResumeModal')">✕</button>
+            </div>
+            <div class="modal-body">
+                <h4 style="margin-bottom:8px" id="uploadJobTitle"></h4>
+                <p style="color:var(--text-muted);font-size:13px;margin-bottom:20px" id="uploadJobCompany"></p>
+                
+                <form id="uploadResumeForm" onsubmit="handleResumeUpload(event)">
+                    <div class="file-upload" id="fileUploadArea">
+                        <input type="file" id="resumeFile" accept=".pdf,.doc,.docx,.txt" required>
+                        <div class="upload-icon">📄</div>
+                        <h4>Drop your resume here</h4>
+                        <p>Supports PDF, DOC, DOCX, TXT (max 5MB)</p>
+                        <div id="fileName" style="color:var(--accent);margin-top:8px;font-size:13px"></div>
+                    </div>
+                    <div class="modal-footer" style="padding:20px 0 0">
+                        <button type="button" class="btn btn-secondary" onclick="closeModal('uploadResumeModal')">Cancel</button>
+                        <button type="submit" class="btn btn-primary" id="uploadBtn">Upload & Apply</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== JOB DETAIL MODAL (Admin) ========== -->
+    <div class="modal-overlay" id="jobDetailModal">
+        <div class="modal" style="max-width:800px">
+            <div class="modal-header">
+                <h3 id="detailJobTitle">Job Details</h3>
+                <button class="modal-close" onclick="closeModal('jobDetailModal')">✕</button>
+            </div>
+            <div class="modal-body" id="jobDetailContent"></div>
+        </div>
+    </div>
+
+    <script src="/js/app.js"></script>
+</body>
+</html>
