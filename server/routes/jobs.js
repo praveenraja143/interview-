@@ -52,6 +52,18 @@ router.put('/:id', protect, adminOnly, async (req, res) => {
     }
 });
 
+// DELETE /api/jobs/:id - Delete job
+router.delete('/:id', protect, adminOnly, async (req, res) => {
+    try {
+        const job = await Job.findByIdAndDelete(req.params.id);
+        if (!job) return res.status(404).json({ message: 'Job not found' });
+        res.json({ message: 'Job deleted successfully' });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+
 // POST /api/jobs/:id/advance - Advance job to next round
 router.post('/:id/advance', protect, adminOnly, async (req, res) => {
     try {

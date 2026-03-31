@@ -38,10 +38,10 @@ const state = {
 };
 
 // API Base
-const API_URL = 'http://10.230.253.177:3001/api';
+const API_URL = 'https://interview-p1qg.onrender.com/api';
 
 // Socket.IO
-const socket = io('http://10.230.253.177:3001');
+const socket = io('https://interview-p1qg.onrender.com');
 
 // ==========================================
 // INITIALIZATION
@@ -1288,6 +1288,8 @@ function renderAdminJobs(jobs) {
             
             <div class="job-actions" style="flex-wrap: wrap">
                 ${actionsHtml}
+                <button class="btn btn-secondary btn-sm" onclick="editJob('${job._id}')">✏️ Edit</button>
+                <button class="btn btn-danger btn-sm" onclick="deleteJob('${job._id}')" style="background:var(--danger)">🗑️ Delete</button>
                 <button class="btn btn-secondary btn-sm" onclick="viewJobDetails('${job._id}')">📊 View Report</button>
             </div>
         `;
@@ -1298,6 +1300,93 @@ function renderAdminJobs(jobs) {
 // ==========================================
 // ADMIN ACTIONS
 // ==========================================
+window.deleteJob = async (jobId) => {
+    if (!confirm('Are you absolutely sure you want to completely delete this job and all its applicants/data?')) return;
+    showLoading('Deleting Job...');
+    try {
+        await apiCall('/jobs/' + jobId, 'DELETE');
+        showToast('Job deleted perfectly', 'success');
+        loadAdminDashboard();
+    } catch (e) {
+        showToast('Error deleting job', 'error');
+    } finally {
+        hideLoading();
+    }
+};
+
+window.editJob = async (jobId) => {
+    showLoading('Loading job...');
+    try {
+        const job = await apiCall('/jobs/' + jobId);
+        
+        document.getElementById('editJobId').value = job._id;
+        document.getElementById('editJobTitle').value = job.title;
+        document.getElementById('editJobDescription').value = job.description;
+        document.getElementById('editJobCompany').value = job.company;
+        document.getElementById('editJobPositions').value = job.totalPositions;
+        document.getElementById('editJobMaxApplicants').value = job.maxApplicants;
+        document.getElementById('editJobSkills').value = job.requiredSkills.join(', ');
+        document.getElementById('editJobExperience').value = job.experience;
+        document.getElementById('editJobEducation').value = job.education;
+        document.getElementById('editJobStartDate').value = job.startDate ? job.startDate.substring(0,10) : '';
+        document.getElementById('editJobEndDate').value = job.endDate ? job.endDate.substring(0,10) : '';
+        
+        if (job.eliminationRatios) {
+            document.getElementById('editRatioAts').value = job.eliminationRatios.ats || 50;
+            document.getElementById('editRatioAptitude').value = job.eliminationRatios.aptitude || 50;
+            document.getElementById('editRatioTechnical').value = job.eliminationRatios.technical || 50;
+            document.getElementById('editRatioGd').value = job.eliminationRatios.gd || 50;
+        }
+
+        hideLoading();
+        openModal('editJobModal');
+    } catch (e) {
+        hideLoading();
+        showToast('Error loading job details', 'error');
+    }
+};
+
+window.handleUpdateJob = async (e) => {
+    e.preventDefault();
+    const jobId = document.getElementById('editJobId').value;
+    const startDateVal = document.getElementById('editJobStartDate').value;
+    const endDateVal = document.getElementById('editJobEndDate').value;
+    
+    if (!startDateVal || !endDateVal || new Date(startDateVal) >= new Date(endDateVal)) {
+        return showToast('End Date must be after Start Date.', 'error');
+    }
+
+    showLoading('Updating job...');
+    const payload = {
+        title: document.getElementById('editJobTitle').value,
+        description: document.getElementById('editJobDescription').value,
+        company: document.getElementById('editJobCompany').value,
+        totalPositions: parseInt(document.getElementById('editJobPositions').value),
+        maxApplicants: parseInt(document.getElementById('editJobMaxApplicants').value) || 100,
+        requiredSkills: document.getElementById('editJobSkills').value.split(',').map(s => s.trim()),
+        experience: document.getElementById('editJobExperience').value || 0,
+        education: document.getElementById('editJobEducation').value,
+        startDate: startDateVal,
+        endDate: endDateVal,
+        eliminationRatios: {
+            ats: parseInt(document.getElementById('editRatioAts').value),
+            aptitude: parseInt(document.getElementById('editRatioAptitude').value),
+            technical: parseInt(document.getElementById('editRatioTechnical').value),
+            gd: parseInt(document.getElementById('editRatioGd').value)
+        }
+    };
+
+    try {
+        await apiCall('/jobs/' + jobId, 'PUT', payload);
+        closeModal('editJobModal');
+        showToast('Job updated successfully!', 'success');
+        loadAdminDashboard();
+    } catch (error) {
+    } finally {
+        hideLoading();
+    }
+};
+
 window.openCreateJobModal = () => {
     // Pre-fill Start and End dates to prevent empty formatting issues
     const now = new Date();

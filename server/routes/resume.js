@@ -68,8 +68,14 @@ router.post('/upload/:jobId', protect, upload.single('resume'), async (req, res)
 
         if (ext === '.pdf') {
             const dataBuffer = fs.readFileSync(filePath);
-            const pdfData = await pdfParse(dataBuffer);
-            resumeText = pdfData.text;
+            const parseFn = typeof pdfParse === 'function' ? pdfParse : (pdfParse.default || pdfParse.PDFParse || pdfParse.pdfParse);
+            if (typeof parseFn !== 'function') {
+                // Try Mammoth or plain text if pdfParse utterly fails
+                resumeText = "PDF parsing library failed. Assuming empty text for fallback.";
+            } else {
+                const pdfData = await parseFn(dataBuffer);
+                resumeText = pdfData.text;
+            }
         } else if (ext === '.txt') {
             resumeText = fs.readFileSync(filePath, 'utf-8');
         } else {

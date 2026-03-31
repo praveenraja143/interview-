@@ -564,7 +564,100 @@
         </div>
     </div>
 
-    <!-- ========== RESUME UPLOAD MODAL ========== -->
+    <!-- ========== EDIT JOB MODAL ========== -->
+    <div class="modal-overlay" id="editJobModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Edit Job</h3>
+                <button class="modal-close" onclick="closeModal('editJobModal')">✕</button>
+            </div>
+            <div class="modal-body">
+                <form id="editJobForm" onsubmit="handleUpdateJob(event)">
+                    <input type="hidden" id="editJobId">
+                    <div class="form-group">
+                        <label>Job Title</label>
+                        <input type="text" class="form-control" id="editJobTitle" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea class="form-control" id="editJobDescription" required></textarea>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Company Name</label>
+                            <input type="text" class="form-control" id="editJobCompany" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Total Positions</label>
+                            <input type="number" class="form-control" id="editJobPositions" min="1" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Max Applicants Limit</label>
+                        <input type="number" class="form-control" id="editJobMaxApplicants" min="1">
+                        <small style="color:var(--text-muted);font-size:11px">Maximum number of candidates who can apply for this job</small>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Required Skills (comma separated)</label>
+                            <input type="text" class="form-control" id="editJobSkills">
+                        </div>
+                        <div class="form-group">
+                            <label>Min Experience (years)</label>
+                            <input type="number" class="form-control" id="editJobExperience" min="0">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Education Requirement</label>
+                        <select class="form-control" id="editJobEducation">
+                            <option value="">Any</option>
+                            <option value="bachelor">Bachelor's Degree</option>
+                            <option value="master">Master's Degree</option>
+                            <option value="phd">PhD</option>
+                            <option value="diploma">Diploma</option>
+                        </select>
+                    </div>
+                    <div class="form-row" style="margin-top:16px;">
+                        <div class="form-group">
+                            <label>Start Date</label>
+                            <input type="date" class="form-control" id="editJobStartDate" required>
+                        </div>
+                        <div class="form-group">
+                            <label>End Date</label>
+                            <input type="date" class="form-control" id="editJobEndDate" required>
+                        </div>
+                    </div>
+                    <div style="margin-top:20px">
+                        <h4 style="font-size:14px;margin-bottom:12px;color:var(--accent-light)">Elimination Ratios (% to keep per round)</h4>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>ATS Round</label>
+                                <input type="number" class="form-control" id="editRatioAts" min="10">
+                            </div>
+                            <div class="form-group">
+                                <label>Aptitude Round</label>
+                                <input type="number" class="form-control" id="editRatioAptitude" min="10">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Technical Round</label>
+                                <input type="number" class="form-control" id="editRatioTechnical" min="10">
+                            </div>
+                            <div class="form-group">
+                                <label>GD Round</label>
+                                <input type="number" class="form-control" id="editRatioGd" min="10">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer" style="padding:16px 0 0">
+                        <button type="button" class="btn btn-secondary" onclick="closeModal('editJobModal')">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Update Job</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
     <div class="modal-overlay" id="uploadResumeModal">
         <div class="modal">
             <div class="modal-header">
