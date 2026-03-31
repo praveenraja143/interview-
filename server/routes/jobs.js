@@ -147,29 +147,16 @@ router.post('/:id/advance', protect, adminOnly, async (req, res) => {
                 report = eliminationEngine.generateReport(processed, round);
                 emailService.sendAdminReport(process.env.ADMIN_EMAIL, job.title, round, processed);
             } else {
-                // If no results for current round, advance qualified users individually
-                // NOTE: updateMany with $ positional operator doesn't work correctly for nested arrays
-                // So we find each user and update one by one
-                const qualifiedUsers = await User.find({
-                    'appliedJobs': {
-                        $elemMatch: {
-                            jobId: job._id,
-                            currentRound: round
-                        }
+                // If no results for current round, advance qualified users' currentRound and status
+                await User.updateMany(
+                    { 'appliedJobs.jobId': job._id, 'appliedJobs.currentRound': round },
+                    { 
+                        $set: { 
+                            'appliedJobs.$.currentRound': nextRound,
+                            'appliedJobs.$.status': `${round}_passed`
+                        } 
                     }
-                });
-
-                for (const u of qualifiedUsers) {
-                    await User.updateOne(
-                        { _id: u._id, 'appliedJobs.jobId': job._id },
-                        {
-                            $set: {
-                                'appliedJobs.$.currentRound': nextRound,
-                                'appliedJobs.$.status': `${round}_passed`
-                            }
-                        }
-                    );
-                }
+                );
             }
         }
 
