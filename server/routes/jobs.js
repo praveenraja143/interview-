@@ -286,10 +286,30 @@ router.get('/:id/stats', protect, adminOnly, async (req, res) => {
 
         for (const round of rounds) {
             const results = await RoundResult.find({ jobId: job._id, round });
+            const roundOrder = ['accepting', 'ats', 'aptitude', 'technical', 'gd', 'interview', 'completed'];
+            const roundIndex = roundOrder.indexOf(round);
+            const currentRoundIndex = roundOrder.indexOf(job.currentRound);
+
+            const passed = results.filter(r => r.passed).length;
+            let failed = 0;
+            let pending = 0;
+
+            if (roundIndex < currentRoundIndex) {
+                // This is a past round - anyone who didn't pass failed
+                failed = results.length - passed;
+            } else if (roundIndex === currentRoundIndex) {
+                // This is the current round - anyone who didn't pass is pending
+                pending = results.length - passed;
+            } else {
+                // Future round - everything is pending
+                pending = results.length;
+            }
+
             stats[round] = {
                 total: results.length,
-                passed: results.filter(r => r.passed).length,
-                failed: results.filter(r => !r.passed).length,
+                passed,
+                failed,
+                pending,
                 avgScore: results.length > 0
                     ? Math.round(results.reduce((s, r) => s + r.score, 0) / results.length)
                     : 0

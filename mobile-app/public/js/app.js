@@ -1511,6 +1511,7 @@ window.viewJobDetails = async (jobId) => {
                     <th>Average Score</th>
                     <th>Passed</th>
                     <th>Failed</th>
+                    <th>Pending</th>
                 </tr>
             </thead>
             <tbody>`;
@@ -1523,6 +1524,7 @@ window.viewJobDetails = async (jobId) => {
                         <td style="color:var(--accent);font-weight:700">${data.avgScore}%</td>
                         <td style="color:var(--success)">${data.passed}</td>
                         <td style="color:var(--danger)">${data.failed}</td>
+                        <td style="color:var(--warning)">${data.pending || 0}</td>
                     </tr>
                 `;
             }
