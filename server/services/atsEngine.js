@@ -14,6 +14,17 @@ class ATSEngine {
 
     analyzeResume(resumeText, job) {
         const text = resumeText.toLowerCase();
+        
+        // 1. Basic Local Validation: Is this actually a resume?
+        const isResume = this.validateIsResume(text);
+        if (!isResume) {
+            return {
+                score: 10,
+                details: { skillMatch: 0, experienceMatch: 0, educationMatch: 0, keywordScore: 10 },
+                feedback: "⚠️ Detected as non-resume content. Please upload a professional CV/Resume."
+            };
+        }
+
         const tokens = tokenizer.tokenize(text);
 
         const skillScore = this.calculateSkillMatch(tokens, job.requiredSkills);
@@ -38,6 +49,24 @@ class ATSEngine {
             },
             feedback: this.generateFeedback(skillScore, experienceScore, educationScore, keywordScore)
         };
+    }
+
+    validateIsResume(text) {
+        // Look for common resume sections
+        const sections = [
+            'experience', 'education', 'skills', 'projects', 'objective', 
+            'summary', 'employment', 'certificates', 'languages', 'contact',
+            'email', 'phone', 'university', 'college', 'school'
+        ];
+        
+        let foundCount = 0;
+        for (const section of sections) {
+            if (text.includes(section)) foundCount++;
+        }
+
+        // A typical task PDF might have "skills" or "projects" but rarely "experience" + "education" + "contact info"
+        // We require at least 3-4 section markers to be considered a resume locally
+        return foundCount >= 4;
     }
 
     calculateSkillMatch(tokens, requiredSkills) {
