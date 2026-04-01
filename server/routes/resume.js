@@ -158,15 +158,28 @@ router.post('/upload/:jobId', protect, upload.single('resume'), async (req, res)
         job.applicants.push(user._id);
         await job.save();
 
-        // Save ATS result
+        // Determine pass/fail based on score (50% threshold)
+        const atsPassed = atsResult.score >= 50;
+
+        // Save ATS result with passed status
         await RoundResult.create({
             userId: user._id,
             jobId: job._id,
             round: 'ats',
             score: atsResult.score,
+            passed: atsPassed,
             details: atsResult.details,
             feedback: atsResult.feedback
         });
+
+        // Update user's application status based on ATS result
+        const appliedJob = user.appliedJobs.find(j => j.jobId.toString() === job._id.toString());
+        if (appliedJob) {
+            appliedJob.status = atsPassed ? 'ats_passed' : 'ats_failed';
+            appliedJob.scores.ats = atsResult.score;
+            user.markModified('appliedJobs');
+            await user.save();
+        }
 
         // Send welcome email
         emailService.sendWelcome(user, job.title);
@@ -184,7 +197,8 @@ router.post('/upload/:jobId', protect, upload.single('resume'), async (req, res)
         res.status(201).json({
             message: 'Resume uploaded and analyzed successfully',
             atsScore: atsResult.score,
-            passed: atsResult.score >= 50,
+            passed: atsPassed,
+            status: atsPassed ? 'ats_passed' : 'ats_failed',
             details: atsResult.details,
             feedback: atsResult.feedback
         });
