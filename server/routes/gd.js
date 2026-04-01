@@ -53,7 +53,7 @@ router.get('/:jobId/topic', protect, async (req, res) => {
 // POST /api/gd/:jobId/submit - Submit GD performance
 router.post('/:jobId/submit', protect, async (req, res) => {
     try {
-        const { speechText, duration, responseTime, totalSessionTime } = req.body;
+        const { speechText, duration, responseTime, totalSessionTime, disqualified } = req.body;
         const job = await Job.findById(req.params.jobId);
         if (!job) return res.status(404).json({ message: 'Job not found' });
 
@@ -97,6 +97,24 @@ router.post('/:jobId/submit', protect, async (req, res) => {
                 totalSessionTime: totalSessionTime || 900
             });
         }
+        
+        // Handle disqualification
+        if (disqualified) {
+            analysis = {
+                score: 0,
+                details: {
+                    contentQuality: 0,
+                    communication: 0,
+                    relevance: 0,
+                    leadership: 0,
+                    confidence: 0,
+                    participationLevel: 0,
+                    speakingTime: 0
+                },
+                feedback: 'Disqualified due to malpractice (tab switching or other violations).'
+            };
+            console.log('🚫 DISQUALIFIED: GD score set to 0');
+        }
 
         const result = await RoundResult.create({
             userId: req.user._id,
@@ -107,10 +125,13 @@ router.post('/:jobId/submit', protect, async (req, res) => {
             feedback: analysis.feedback
         });
 
-        await User.updateOne(
-            { _id: req.user._id, 'appliedJobs.jobId': job._id },
-            { $set: { 'appliedJobs.$.scores.gd': analysis.score } }
-        );
+        const user = await User.findById(req.user._id);
+        const application = user.appliedJobs.find(j => j.jobId.toString() === job._id.toString());
+        if (application) {
+            application.scores.gd = analysis.score;
+            application.status = 'gd_completed';
+            await user.save();
+        }
 
         const io = req.app.get('io');
         if (io) {

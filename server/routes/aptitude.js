@@ -60,7 +60,7 @@ router.get('/:jobId/questions', protect, async (req, res) => {
 // POST /api/aptitude/:jobId/submit - Submit aptitude answers  
 router.post('/:jobId/submit', protect, async (req, res) => {
     try {
-        const { answers, timeTaken } = req.body;
+        const { answers, timeTaken, disqualified } = req.body;
         const job = await Job.findById(req.params.jobId);
         if (!job) return res.status(404).json({ message: 'Job not found' });
 
@@ -90,7 +90,23 @@ router.post('/:jobId/submit', protect, async (req, res) => {
             }
         }
 
-        const score = Math.round((correct / questions.length) * 100);
+        let score = Math.round((correct / questions.length) * 100);
+        
+        if (disqualified) {
+            score = 0;
+            console.log('🚫 DISQUALIFIED: Aptitude score set to 0');
+        }
+        const passed = score >= 50;
+
+        let parsedTimeTaken = 0;
+        if (typeof timeTaken === 'string' && timeTaken.includes(':')) {
+            const parts = timeTaken.split(':');
+            const timeLeftSecs = parseInt(parts[0] || '0') * 60 + parseInt(parts[1] || '0');
+            const timeLimitSecs = (job.timeLimit?.aptitude || 30) * 60;
+            parsedTimeTaken = Math.max(0, timeLimitSecs - timeLeftSecs);
+        } else if (!isNaN(timeTaken)) {
+            parsedTimeTaken = Number(timeTaken);
+        }
 
         // Save result
         const result = await RoundResult.create({
@@ -101,16 +117,19 @@ router.post('/:jobId/submit', protect, async (req, res) => {
             details: {
                 totalQuestions: questions.length,
                 correctAnswers: correct,
-                timeTaken: timeTaken || 0
+                timeTaken: parsedTimeTaken
             },
             feedback: `Answered ${correct}/${questions.length} correctly (${score}%)`
         });
 
-        // Update user scores
-        await User.updateOne(
-            { _id: req.user._id, 'appliedJobs.jobId': job._id },
-            { $set: { 'appliedJobs.$.scores.aptitude': score } }
-        );
+        // Update user scores and status - Use find and save for consistency
+        const user = await User.findById(req.user._id);
+        const application = user.appliedJobs.find(j => j.jobId.toString() === job._id.toString());
+        if (application) {
+            application.scores.aptitude = score;
+            application.status = 'aptitude_completed';
+            await user.save();
+        }
 
         // Emit socket event
         const io = req.app.get('io');

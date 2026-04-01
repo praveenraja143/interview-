@@ -57,7 +57,7 @@ router.get('/:jobId/questions', protect, async (req, res) => {
 // POST /api/interview/:jobId/submit - Submit interview performance
 router.post('/:jobId/submit', protect, async (req, res) => {
     try {
-        const { answers, faceData } = req.body;
+        const { answers, faceData, disqualified } = req.body;
         const job = await Job.findById(req.params.jobId);
         if (!job) return res.status(404).json({ message: 'Job not found' });
 
@@ -126,6 +126,22 @@ router.post('/:jobId/submit', protect, async (req, res) => {
                 duration: req.body.duration || 0
             });
         }
+        
+        // Handle disqualification
+        if (disqualified) {
+            analysis = {
+                score: 0,
+                details: {
+                    facialConfidence: 0,
+                    bodyLanguage: 0,
+                    answerQuality: 0,
+                    communicationSkill: 0,
+                    overallImpression: 0
+                },
+                feedback: 'Disqualified due to malpractice (tab switching or other violations).'
+            };
+            console.log('🚫 DISQUALIFIED: Interview score set to 0');
+        }
 
         const result = await RoundResult.create({
             userId: req.user._id,
@@ -136,10 +152,13 @@ router.post('/:jobId/submit', protect, async (req, res) => {
             feedback: analysis.feedback
         });
 
-        await User.updateOne(
-            { _id: req.user._id, 'appliedJobs.jobId': job._id },
-            { $set: { 'appliedJobs.$.scores.interview': analysis.score } }
-        );
+        const user = await User.findById(req.user._id);
+        const application = user.appliedJobs.find(j => j.jobId.toString() === job._id.toString());
+        if (application) {
+            application.scores.interview = analysis.score;
+            application.status = 'interview_completed';
+            await user.save();
+        }
 
         const io = req.app.get('io');
         if (io) {

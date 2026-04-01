@@ -1,0 +1,18 @@
+Jobs in ATS round: 1
+----------------------------
+Job: Python developer
+Total Results: 1
+Scores: [ 80 ]
+Keep count: 1
+Processed: [
+  {
+    userId: new ObjectId('69cb903fa7fa433e1bc7a9f9'),
+    candidateName: 'PraveenRaja P',
+    email: 'praveenrajapaids23@jkkmct.edu.in',
+    score: 80,
+    resultId: new ObjectId('69cba0860801d2280a8fe842'),
+    rank: 1,
+    passed: true,
+    eliminatedAt: null
+  }
+]

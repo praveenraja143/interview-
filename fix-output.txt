@@ -1,0 +1,16 @@
+[dotenv@17.3.1] injecting env (10) from .env -- tip: ΓÜÖ∩╕Å  enable debug logging with { debug: true }
+Connected to DB
+Deleted 1 orphan RoundResult(s) for testx@example.com
+(node:16208) [MONGOOSE] Warning: mongoose: Duplicate schema index on {"email":1} for model "User". This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+(Use `node --trace-warnings ...` to show where the warning was created)
+Cleaned testx@example.com appliedJobs
+Reset RoundResult 69cba0860801d2280a8fe842 passed to false
+Reset PraveenRaja status to applied, currentRound to ats
+Job "Python developer" set to currentRound=ats, status=in_progress
+
+=== VERIFICATION ===
+RoundResults for this job: 1
+  Round: ats | Score: 80 | Passed: false
+Job: Python developer | Round: ats | Status: in_progress | Applicants: 1
+
+Done! DB cleaned and ready for advance.

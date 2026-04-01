@@ -74,7 +74,7 @@ router.get('/:jobId/questions', protect, async (req, res) => {
 // POST /api/technical/:jobId/submit
 router.post('/:jobId/submit', protect, async (req, res) => {
     try {
-        const { answers, timeTaken } = req.body;
+        const { answers, codeAnswers, timeTaken, disqualified } = req.body;
         const job = await Job.findById(req.params.jobId);
         if (!job) return res.status(404).json({ message: 'Job not found' });
 
@@ -147,6 +147,23 @@ router.post('/:jobId/submit', protect, async (req, res) => {
             finalScore = mcqScore;
         }
 
+        if (disqualified) {
+            finalScore = 0;
+            console.log('🚫 DISQUALIFIED: Technical score set to 0');
+        }
+
+        let parsedTimeTaken = 0;
+        if (typeof timeTaken === 'string' && timeTaken.includes(':')) {
+            const parts = timeTaken.split(':');
+            const timeLeftSecs = parseInt(parts[0] || '0') * 60 + parseInt(parts[1] || '0');
+            const timeLimitSecs = (job.timeLimit?.technical || 45) * 60;
+            parsedTimeTaken = Math.max(0, timeLimitSecs - timeLeftSecs);
+        } else if (!isNaN(timeTaken)) {
+            parsedTimeTaken = Number(timeTaken);
+        }
+
+        const passed = finalScore >= 50;
+
         const result = await RoundResult.create({
             userId: req.user._id,
             jobId: job._id,
@@ -159,15 +176,18 @@ router.post('/:jobId/submit', protect, async (req, res) => {
                 mcqScore,
                 codingTotal,
                 codeScore: avgCodeScore,
-                timeTaken: timeTaken || 0
+                timeTaken: parsedTimeTaken
             },
             feedback: `MCQ: ${mcqCorrect}/${mcqTotal} (${mcqScore}%) | Coding: ${avgCodeScore}% | Final: ${finalScore}%`
         });
 
-        await User.updateOne(
-            { _id: req.user._id, 'appliedJobs.jobId': job._id },
-            { $set: { 'appliedJobs.$.scores.technical': finalScore } }
-        );
+        const user = await User.findById(req.user._id);
+        const application = user.appliedJobs.find(j => j.jobId.toString() === job._id.toString());
+        if (application) {
+            application.scores.technical = finalScore;
+            application.status = 'technical_completed';
+            await user.save();
+        }
 
         const io = req.app.get('io');
         if (io) {

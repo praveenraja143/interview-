@@ -80,12 +80,15 @@ router.post('/:id/advance', protect, adminOnly, async (req, res) => {
         const round = job.currentRound;
         const nextRound = roundOrder[currentIndex + 1];
 
+        console.log(`🚀 Advancing Job: ${job.title} | ${round} -> ${nextRound}`);
+
         // 1. Process elimination and send emails if it's an evaluating round
         let report = null;
         let processed = [];
 
         if (round !== 'accepting' && round !== 'completed') {
             const results = await RoundResult.find({ jobId: job._id, round }).populate('userId', 'name email');
+            console.log(`📊 Found ${results.length} results for round ${round}`);
 
             if (results.length > 0) {
                 // Calculate how many to keep
@@ -95,13 +98,14 @@ router.post('/:id/advance', protect, adminOnly, async (req, res) => {
                     job.eliminationRatios[round] || 50,
                     round
                 );
+                console.log(`⚖️ Elimination Rule: Keeping top ${keepCount} out of ${results.length}`);
 
                 // Eliminate by score
                 processed = eliminationEngine.eliminateByScore(
-                    results.map(r => ({
+                    results.filter(r => r.userId).map(r => ({
                         userId: r.userId._id,
-                        candidateName: r.userId.name,
-                        email: r.userId.email,
+                        candidateName: r.userId?.name,
+                        email: r.userId?.email,
                         score: r.score,
                         resultId: r._id
                     })),
@@ -110,53 +114,66 @@ router.post('/:id/advance', protect, adminOnly, async (req, res) => {
 
                 // Update results and user statuses
                 for (const item of processed) {
-                    await RoundResult.findByIdAndUpdate(item.resultId, { passed: item.passed });
+                    try {
+                        await RoundResult.findByIdAndUpdate(item.resultId, { passed: item.passed });
 
-                    if (item.passed) {
-                        await User.updateOne(
-                            { _id: item.userId, 'appliedJobs.jobId': job._id },
-                            {
-                                $set: {
-                                    'appliedJobs.$.status': `${round}_passed`,
-                                    'appliedJobs.$.currentRound': nextRound,
-                                    [`appliedJobs.$.scores.${round}`]: item.score
+                        const userToUpdate = await User.findById(item.userId);
+                        if (userToUpdate) {
+                            const appliedJob = userToUpdate.appliedJobs.find(j => j.jobId.toString() === job._id.toString());
+                            if (appliedJob) {
+                                if (item.passed) {
+                                    appliedJob.status = `${round}_passed`;
+                                    appliedJob.currentRound = nextRound;
+                                    appliedJob.scores[round] = item.score;
+                                } else {
+                                    appliedJob.status = `${round}_failed`;
+                                    appliedJob.scores[round] = item.score;
                                 }
+                                await userToUpdate.save();
+                                console.log(`🧑‍💻 Advanced user ${userToUpdate.name} (${item.userId}) to ${item.passed ? 'passed' : 'failed'} for ${round}`);
                             }
-                        );
-                    } else {
-                        await User.updateOne(
-                            { _id: item.userId, 'appliedJobs.jobId': job._id },
-                            {
-                                $set: {
-                                    'appliedJobs.$.status': `${round}_failed`,
-                                    [`appliedJobs.$.scores.${round}`]: item.score
-                                }
-                            }
-                        );
-                    }
+                        }
 
-                    // Send email to candidate
-                    const candidate = await User.findById(item.userId);
-                    if (candidate) {
-                        emailService.sendRoundResult(candidate, job.title, round, item.passed, item.score,
-                            item.passed ? 'Congratulations! You have qualified for the next round.' : 'Thank you for your participation.');
+                        // Send email to candidate
+                        if (userToUpdate) {
+                            await emailService.sendRoundResult(userToUpdate, job.title, round, item.passed, item.score,
+                                item.passed ? 'Congratulations! You have qualified for the next round.' : 'Thank you for your participation.');
+                        }
+                    } catch (err) {
+                        console.error(`❌ Error processing candidate ${item.userId}:`, err.message);
                     }
                 }
                 
+                // Also advance any candidates who were in this round but have no results (fail them by default as they likely missed the test)
+                const missedUsers = await User.find({ 
+                    'appliedJobs.jobId': job._id, 
+                    'appliedJobs.currentRound': round,
+                    'appliedJobs.status': { $ne: `${round}_passed`, $ne: `${round}_failed` }
+                });
+
+                for (const u of missedUsers) {
+                    const app = u.appliedJobs.find(j => j.jobId.toString() === job._id.toString() && j.currentRound === round);
+                    if (app) {
+                        app.status = `${round}_failed`; // Treat as failed if they missed the test
+                        app.feedback = 'Did not complete the evaluation round.';
+                        await u.save();
+                    }
+                }
+
                 // Generate and send admin report
                 report = eliminationEngine.generateReport(processed, round);
-                emailService.sendAdminReport(process.env.ADMIN_EMAIL, job.title, round, processed);
+                await emailService.sendAdminReport(process.env.ADMIN_EMAIL || req.user.email, job.title, round, processed);
             } else {
                 // If no results for current round, advance qualified users' currentRound and status
-                await User.updateMany(
-                    { 'appliedJobs.jobId': job._id, 'appliedJobs.currentRound': round },
-                    { 
-                        $set: { 
-                            'appliedJobs.$.currentRound': nextRound,
-                            'appliedJobs.$.status': `${round}_passed`
-                        } 
+                const usersToUpdate = await User.find({ 'appliedJobs.jobId': job._id, 'appliedJobs.currentRound': round });
+                for (const u of usersToUpdate) {
+                    const app = u.appliedJobs.find(j => j.jobId.toString() === job._id.toString() && j.currentRound === round);
+                    if (app) {
+                        app.currentRound = nextRound;
+                        app.status = `${round}_passed`;
+                        await u.save();
                     }
-                );
+                }
             }
         }
 
@@ -227,28 +244,20 @@ router.post('/:id/process-round', protect, adminOnly, async (req, res) => {
         for (const item of processed) {
             await RoundResult.findByIdAndUpdate(item.resultId, { passed: item.passed });
 
-            // Update user's job application status AND advance currentRound for passed candidates
-            if (item.passed) {
-                await User.updateOne(
-                    { _id: item.userId, 'appliedJobs.jobId': job._id },
-                    {
-                        $set: {
-                            'appliedJobs.$.status': `${round}_passed`,
-                            'appliedJobs.$.currentRound': nextRound,
-                            [`appliedJobs.$.scores.${round}`]: item.score
-                        }
+            const userToUpdate = await User.findById(item.userId);
+            if (userToUpdate) {
+                const appliedJob = userToUpdate.appliedJobs.find(j => j.jobId.toString() === job._id.toString());
+                if (appliedJob) {
+                    if (item.passed) {
+                        appliedJob.status = `${round}_passed`;
+                        appliedJob.currentRound = nextRound;
+                        appliedJob.scores[round] = item.score;
+                    } else {
+                        appliedJob.status = `${round}_failed`;
+                        appliedJob.scores[round] = item.score;
                     }
-                );
-            } else {
-                await User.updateOne(
-                    { _id: item.userId, 'appliedJobs.jobId': job._id },
-                    {
-                        $set: {
-                            'appliedJobs.$.status': `${round}_failed`,
-                            [`appliedJobs.$.scores.${round}`]: item.score
-                        }
-                    }
-                );
+                    await userToUpdate.save();
+                }
             }
 
             // Send email to candidate

@@ -1,0 +1,34 @@
+[dotenv@17.3.1] injecting env (10) from .env -- tip: ≡ƒöÉ prevent committing .env to code: https://dotenvx.com/precommit
+Connected to DB
+
+=== JOBS ===
+Job: Python developer | ID: 69cba0680801d2280a8fe826 | Round: ats | Status: open | Applicants: 1
+(node:14788) [MONGOOSE] Warning: mongoose: Duplicate schema index on {"email":1} for model "User". This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+=== ROUND RESULTS ===
+Total RoundResult entries: 10
+  User: Test Candidate (candidate_eb40bb8f@example.com) | Job: 69cb67c2a9e5ca5c152d69eb | Round: ats | Score: 27 | Passed: true | ID: 69cb67c3a9e5ca5c152d69fa
+  User: Test Candidate (candidate_eb40bb8f@example.com) | Job: 69cb67c2a9e5ca5c152d69eb | Round: aptitude | Score: 100 | Passed: true | ID: 69cb67c5a9e5ca5c152d6a12
+  User: Test Candidate (candidate_eb40bb8f@example.com) | Job: 69cb67c2a9e5ca5c152d69eb | Round: technical | Score: 100 | Passed: true | ID: 69cb67c5a9e5ca5c152d6a26
+  User: Test Candidate (candidate_eb40bb8f@example.com) | Job: 69cb67c2a9e5ca5c152d69eb | Round: gd | Score: 0 | Passed: true | ID: 69cb67c7a9e5ca5c152d6a3a
+  User: Test Candidate (candidate_eb40bb8f@example.com) | Job: 69cb67c2a9e5ca5c152d69eb | Round: interview | Score: 42 | Passed: true | ID: 69cb67c8a9e5ca5c152d6a50
+  User: PraveenRaja P (praveenrajapaids23@jkkmct.edu.in) | Job: 69cb9024a7fa433e1bc7a9f3 | Round: ats | Score: 80 | Passed: false | ID: 69cb979695370d1187c92fb2
+  User: PraveenRaja P (praveenrajapaids23@jkkmct.edu.in) | Job: 69cb9cc57e8e1794a23ed07c | Round: ats | Score: 80 | Passed: false | ID: 69cb9ce07e8e1794a23ed096
+  User: PraveenRaja P (praveenrajapaids23@jkkmct.edu.in) | Job: 69cba0680801d2280a8fe826 | Round: ats | Score: 80 | Passed: true | ID: 69cba0860801d2280a8fe842
+  User: PraveenRaja P (praveenrajapaids23@jkkmct.edu.in) | Job: 69cbb38e1bd13ab44ee3ede8 | Round: ats | Score: 88 | Passed: false | ID: 69cbb3ca302f78152c825e87
+  User: Test Candidate (testx@example.com) | Job: 69cba0680801d2280a8fe826 | Round: ats | Score: 80 | Passed: true | ID: 69cc4d425d77bb4a52b1b645
+
+=== USERS WITH APPLIED JOBS ===
+User: Test Candidate (candidate_eb40bb8f@example.com) | Role: candidate
+  JobId: 69cb67c2a9e5ca5c152d69eb | Status: interview_passed | CurrentRound: completed | ATS Score: 27
+User: PraveenRaja P (praveenrajapaids23@jkkmct.edu.in) | Role: candidate
+  JobId: 69cb9024a7fa433e1bc7a9f3 | Status: applied | CurrentRound: ats | ATS Score: 80
+  JobId: 69cb9cc57e8e1794a23ed07c | Status: applied | CurrentRound: ats | ATS Score: 80
+  JobId: 69cba0680801d2280a8fe826 | Status: ats_passed | CurrentRound: aptitude | ATS Score: 80
+  JobId: 69cbb38e1bd13ab44ee3ede8 | Status: applied | CurrentRound: ats | ATS Score: 88
+User: Test Candidate (testx@example.com) | Role: candidate
+  JobId: 69cba0680801d2280a8fe826 | Status: ats_passed | CurrentRound: aptitude | ATS Score: 80
+
+=== DUPLICATE ROUND RESULTS ===
+No duplicates found

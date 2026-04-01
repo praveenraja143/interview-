@@ -354,6 +354,10 @@ function renderCandidateJobs(jobs, profile) {
             } else if (application.status === 'applied' && job.currentRound === 'ats') {
                 // ATS processing in progress
                 actionHtml = `<button class="btn btn-secondary" disabled>ATS Screening in Progress</button>`;
+            } else if (application.status === job.currentRound + '_passed' || 
+                       application.status === job.currentRound + '_completed' || 
+                       application.status === job.currentRound + '_failed') {
+                actionHtml = `<button class="btn btn-success" style="background:var(--success); border:none; opacity:0.8" disabled>✅ Round Completed</button>`;
             } else if (application.currentRound === job.currentRound && application.status.includes('passed')) {
                 // Candidate's current round matches job's current round AND they've passed previous round
                 // Show the action button for the current round
@@ -441,6 +445,10 @@ function formatAppStatus(status) {
     if (status.includes('_failed')) {
         const round = status.replace('_failed', '');
         return `<span style="color:var(--danger)">Failed ${formatRoundName(round)}</span>`;
+    }
+    if (status.includes('_completed')) {
+        const round = status.replace('_completed', '');
+        return `<span style="color:var(--primary)">Completed ${formatRoundName(round)} (Under Evaluation)</span>`;
     }
     return status;
 }
@@ -575,6 +583,7 @@ function setupExam(data, round) {
         answers: {},
         codeAnswers: {},
         currentQuestionIndex: 0,
+        totalTime: data.timeLimit * 60,
         timeLeft: data.timeLimit * 60, // Convert minutes to seconds
     };
 
@@ -770,7 +779,7 @@ async function submitExam(round) {
         const data = await apiCall(`/${round}/${state.currentJobId}/submit`, 'POST', {
             answers: state.exam.answers,
             codeAnswers: state.exam.codeAnswers || {},
-            timeTaken: (document.getElementById(`${round}Timer`).textContent)
+            timeTaken: state.exam.totalTime - state.exam.timeLeft
         });
 
         const breakdown = {};
