@@ -1,0 +1,21 @@
+{
+  "name": "PMG AI Interview",
+  "short_name": "PMG",
+  "description": "PMG - AI-powered interview platform automating the hiring process.",
+  "start_url": "/index.html",
+  "display": "standalone",
+  "background_color": "#0a0a1a",
+  "theme_color": "#6366f1",
+  "icons": [
+    {
+      "src": "/img/logo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/img/logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

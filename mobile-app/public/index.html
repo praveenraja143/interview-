@@ -3,9 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="AI-powered interview platform that automates hiring with resume screening, aptitude tests, technical rounds, group discussions, and one-on-one video interviews.">
-    <title>AI Interview Platform | Automated Hiring System</title>
+    <meta name="description" content="PMG - AI-powered mobile interview platform that automates hiring.">
+    <title>PMG Mobile | Private Medical Group AI</title>
     <link rel="stylesheet" href="/css/styles.css">
+    <link rel="manifest" href="/manifest.json">
     <script src="https://interview-p1qg.onrender.com/socket.io/socket.io.js"></script>
 </head>
 <body>
@@ -20,8 +21,8 @@
         <!-- Navigation -->
         <nav class="navbar" id="navbar">
             <a href="#" class="navbar-brand" onclick="showPage('landing')">
-                <div class="logo-icon">🤖</div>
-                <h1>AI Interview</h1>
+                <img src="/img/logo.png" alt="PMG Logo" class="nav-logo" style="height:32px" onerror="this.innerHTML='🤖'; this.style.fontSize='1.5rem'">
+                <h1 style="margin-left:8px">PMG</h1>
             </a>
             <div class="navbar-nav" id="navActions">
                 <button class="nav-btn primary" onclick="showPage('auth')">Get Started</button>
