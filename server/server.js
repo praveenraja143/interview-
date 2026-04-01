@@ -89,7 +89,7 @@ async function startServer() {
     try {
         await connectDB();
         await seedAdmin();
-        server.listen(PORT, '0.0.0.0', () => {
+        server.listen(PORT, () => {
             console.log(`
     ╔══════════════════════════════════════════╗
     ║   🤖 AI Interview Platform Running!      ║

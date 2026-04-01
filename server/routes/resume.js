@@ -102,36 +102,8 @@ router.post('/upload/:jobId', protect, upload.single('resume'), async (req, res)
             }
         }
 
-        // ATS Analysis (Try AI first, then fallback to local engine)
-        const aiService = require('../services/aiService');
-        let atsResult = null;
-
-        if (aiService.isAvailable) {
-            const aiAts = await aiService.evaluateResume(
-                resumeText, 
-                job.title, 
-                job.requiredSkills, 
-                job.experience
-            );
-            if (aiAts) {
-                console.log(`🤖 AI ATS Score: ${aiAts.overallScore}% (IsResume: ${aiAts.isResume})`);
-                atsResult = {
-                    score: aiAts.overallScore,
-                    details: {
-                        skillMatch: aiAts.skillMatch || 0,
-                        experienceMatch: aiAts.experienceMatch || 0,
-                        educationMatch: aiAts.educationMatch || 0,
-                        keywordScore: aiAts.keywordScore || 0
-                    },
-                    feedback: aiAts.feedback
-                };
-            }
-        }
-
-        if (!atsResult) {
-            console.log('⚠️ AI ATS failed or not available, using local fallback...');
-            atsResult = atsEngine.analyzeResume(resumeText, job);
-        }
+        // ATS Analysis
+        const atsResult = atsEngine.analyzeResume(resumeText, job);
 
         // Extract basic info from resume
         const skills = extractSkills(resumeText);

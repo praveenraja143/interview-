@@ -343,55 +343,6 @@ Return ONLY valid JSON. No markdown.
         }
         return null;
     }
-
-    // ==========================================
-    // EVALUATE RESUME WITH AI (High Accuracy ATS)
-    // ==========================================
-    async evaluateResume(resumeText, jobTitle, requiredSkills, requiredExperience) {
-        if (!this.isAvailable) return null;
-
-        const prompt = `You are an expert ATS (Applicant Tracking System) reviewer. 
-Your task is to analyze the text of a document and determine if it is a valid resume, then score it against a job role.
-
-Job Title: ${jobTitle}
-Job Required Skills: ${requiredSkills.join(', ')}
-Required Experience: ${requiredExperience} years
-
-Candidate Document Text: 
-"""
-${resumeText.substring(0, 8000)}
-"""
-
-Analysis Phase:
-1. Is this actually a resume/CV? Check for contact info, work history, education sections.
-2. Does it contain candidate details or is it just a job description / task document?
-3. If it is NOT a resume, give an extremely low overall score (0-5) and mark isResume as false.
-
-Scoring Criteria (0-100):
-- skillMatch: How well do the candidate's projects/skills match the job?
-- experienceMatch: Years of experience found vs required.
-- educationMatch: Degree relevance.
-- keywordScore: Usage of professional and technical terminology.
-
-Return ONLY valid JSON. No markdown.
-{
-  "isResume": true/false,
-  "skillMatch": 80,
-  "experienceMatch": 70,
-  "educationMatch": 100,
-  "keywordScore": 60,
-  "overallScore": 75,
-  "feedback": "Detailed feedback here..."
-}`;
-
-        const text = await this._ask(prompt);
-        const evaluation = this._parseJSON(text, 'object');
-
-        if (evaluation && evaluation.overallScore !== undefined) {
-            return evaluation;
-        }
-        return null;
-    }
 }
 
 module.exports = new AIService();
