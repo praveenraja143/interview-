@@ -299,7 +299,7 @@ router.get('/:id/stats', protect, adminOnly, async (req, res) => {
             const roundIndex = roundOrder.indexOf(round);
             const currentRoundIndex = roundOrder.indexOf(job.currentRound);
 
-            const passed = results.filter(r => r.passed).length;
+            const passed = results.filter(r => r.passed || (roundIndex === currentRoundIndex && (r.score || 0) >= 50)).length;
             let failed = 0;
             let pending = 0;
 
@@ -307,8 +307,9 @@ router.get('/:id/stats', protect, adminOnly, async (req, res) => {
                 // This is a past round - anyone who didn't pass failed
                 failed = results.length - passed;
             } else if (roundIndex === currentRoundIndex) {
-                // This is the current round - anyone who didn't pass is pending
-                pending = results.length - passed;
+                // This is the current round - anyone who didn't pass the threshold is failed
+                failed = results.filter(r => r.passed === false || (r.score !== undefined && r.score < 50)).length;
+                pending = results.length - (passed + failed);
             } else {
                 // Future round - everything is pending
                 pending = results.length;
