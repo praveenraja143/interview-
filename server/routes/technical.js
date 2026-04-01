@@ -117,19 +117,20 @@ router.post('/:jobId/submit', protect, async (req, res) => {
         // Score coding questions (AI-powered or local fallback)
         let codeScore = 0;
         let codingTotal = codingQuestions.length;
+        const finalCodeAnswers = codeAnswers || {};
         for (let i = 0; i < questions.length; i++) {
             const q = questions[i];
-            if (q.type === 'coding' && codeAnswers[i]) {
+            if (q.type === 'coding' && finalCodeAnswers[i]) {
                 // Try AI code evaluation first
                 const aiCodeEval = await aiService.evaluateCode(
-                    codeAnswers[i], q.question, q.language || 'javascript'
+                    finalCodeAnswers[i], q.question, q.language || 'javascript'
                 );
                 if (aiCodeEval && aiCodeEval.overallScore !== undefined) {
                     codeScore += aiCodeEval.overallScore;
                     console.log(`🤖 AI code eval: ${aiCodeEval.overallScore}% - ${aiCodeEval.feedback}`);
                 } else {
                     // Fallback to local keyword evaluation
-                    codeScore += evaluateCode(codeAnswers[i], q);
+                    codeScore += evaluateCode(finalCodeAnswers[i], q);
                 }
             }
         }
