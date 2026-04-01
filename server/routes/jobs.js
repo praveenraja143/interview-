@@ -303,8 +303,22 @@ router.get('/:id/stats', protect, adminOnly, async (req, res) => {
             const roundIndex = roundOrder.indexOf(round);
             const currentRoundIndex = roundOrder.indexOf(job.currentRound);
 
-            const passed = results.filter(r => r.passed === true).length;
-            const failed = results.filter(r => r.passed === false).length;
+            // Calculate pass/fail based on score (50% threshold)
+            // Use stored 'passed' value if available, otherwise calculate from score
+            const passed = results.filter(r => {
+                // If passed is explicitly set, use it
+                if (r.passed === true || r.passed === false) {
+                    return r.passed === true;
+                }
+                // Otherwise, calculate from score (50% threshold)
+                return r.score >= 50;
+            }).length;
+            const failed = results.filter(r => {
+                if (r.passed === true || r.passed === false) {
+                    return r.passed === false;
+                }
+                return r.score < 50;
+            }).length;
             const pending = results.filter(r => r.passed === undefined || r.passed === null).length;
 
             stats[round] = {
@@ -326,6 +340,58 @@ router.get('/:id/stats', protect, adminOnly, async (req, res) => {
 
         res.json({ stats, progression, totalApplicants: job.applicants.length });
     } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+// POST /api/jobs/fix-ats-results - Fix all existing ATS results (admin only, run once)
+router.post('/fix-ats-results', protect, adminOnly, async (req, res) => {
+    try {
+        const atsResults = await RoundResult.find({ round: 'ats' }).populate('userId');
+        console.log(`Found ${atsResults.length} ATS results to fix`);
+
+        let updatedCount = 0;
+        const updates = [];
+
+        for (const result of atsResults) {
+            const passed = result.score >= 50;
+
+            // Update RoundResult if needed
+            if (result.passed !== passed) {
+                result.passed = passed;
+                await result.save();
+                updatedCount++;
+            }
+
+            // Update User's appliedJobs status
+            if (result.userId) {
+                const user = await User.findById(result.userId);
+                if (user) {
+                    const appliedJob = user.appliedJobs.find(
+                        j => j.jobId.toString() === result.jobId.toString()
+                    );
+                    if (appliedJob && appliedJob.status === 'applied') {
+                        appliedJob.status = passed ? 'ats_passed' : 'ats_failed';
+                        appliedJob.scores.ats = result.score;
+                        user.markModified('appliedJobs');
+                        await user.save();
+                        updates.push({
+                            userId: user.name,
+                            score: result.score,
+                            status: appliedJob.status
+                        });
+                    }
+                }
+            }
+        }
+
+        res.json({
+            message: `Fixed ${updatedCount} ATS results`,
+            totalProcessed: atsResults.length,
+            updates
+        });
+    } catch (error) {
+        console.error('Fix ATS error:', error);
         res.status(500).json({ message: error.message });
     }
 });
