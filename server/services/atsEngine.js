@@ -1,14 +1,14 @@
-// ATS Engine - Automated Resume Screening
+// ATS Engine - Automated Resume Screening (High Accuracy Version)
 const natural = require('natural');
 const tokenizer = new natural.WordTokenizer();
 
 class ATSEngine {
     constructor() {
         this.weights = {
-            skills: 0.40,
-            experience: 0.25,
-            education: 0.20,
-            keywords: 0.15
+            skills: 0.50,        // Skills are most important
+            experience: 0.30,    // Experience is second
+            education: 0.15,     // Education is third
+            keywords: 0.05       // Generic keywords are least important
         };
     }
 
@@ -19,25 +19,32 @@ class ATSEngine {
         const isResume = this.validateIsResume(text);
         if (!isResume) {
             return {
-                score: 10,
-                details: { skillMatch: 0, experienceMatch: 0, educationMatch: 0, keywordScore: 10 },
-                feedback: "⚠️ Detected as non-resume content. Please upload a professional CV/Resume."
+                score: 5, // Lower than before
+                details: { skillMatch: 0, experienceMatch: 0, educationMatch: 0, keywordScore: 0 },
+                feedback: "⚠️ This document does not follow a standard professional resume/CV structure. Please ensure you are uploading your CV."
             };
         }
 
         const tokens = tokenizer.tokenize(text);
 
-        const skillScore = this.calculateSkillMatch(tokens, job.requiredSkills);
+        // 2. Strict Scoring
+        const skillScore = this.calculateSkillMatch(text, job.requiredSkills);
         const experienceScore = this.calculateExperienceMatch(text, job.experience);
         const educationScore = this.calculateEducationMatch(text, job.education);
         const keywordScore = this.calculateKeywordScore(text, job);
 
-        const totalScore = Math.round(
+        // Calculate weighted score
+        let totalScore = Math.round(
             (skillScore * this.weights.skills) +
             (experienceScore * this.weights.experience) +
             (educationScore * this.weights.education) +
             (keywordScore * this.weights.keywords)
         );
+
+        // Harsh penalty if zero skills match
+        if (skillScore === 0) {
+            totalScore = Math.round(totalScore * 0.5); // Chop in half if no skills
+        }
 
         return {
             score: Math.min(totalScore, 100),
@@ -52,129 +59,139 @@ class ATSEngine {
     }
 
     validateIsResume(text) {
-        // Look for common resume sections
-        const sections = [
-            'experience', 'education', 'skills', 'projects', 'objective', 
-            'summary', 'employment', 'certificates', 'languages', 'contact',
-            'email', 'phone', 'university', 'college', 'school'
+        // Essential resume markers
+        const essentialMarkers = [
+            /\bexperience\b/i, /\beducation\b/i, /\bskills\b/i, 
+            /\bprojects\b/i, /\bobjective\b/i, /\bsummary\b/i,
+            /\bphone\b/i, /\bemail\b/i, /\bcontact\b/i,
+            /\buniversity\b/i, /\bcollege\b/i, /\baddress\b/i
         ];
         
         let foundCount = 0;
-        for (const section of sections) {
-            if (text.includes(section)) foundCount++;
+        for (const marker of essentialMarkers) {
+            if (marker.test(text)) foundCount++;
         }
 
-        // A typical task PDF might have "skills" or "projects" but rarely "experience" + "education" + "contact info"
-        // We require at least 3-4 section markers to be considered a resume locally
-        return foundCount >= 4;
+        // Must have at least 5 markers to be considered a real professional resume
+        return foundCount >= 5;
     }
 
-    calculateSkillMatch(tokens, requiredSkills) {
-        if (!requiredSkills || requiredSkills.length === 0) return 50;
+    calculateSkillMatch(text, requiredSkills) {
+        if (!requiredSkills || requiredSkills.length === 0) return 0;
         
         let matched = 0;
-        const tokenSet = new Set(tokens);
-        
         for (const skill of requiredSkills) {
-            const skillTokens = skill.toLowerCase().split(/[\s,.-]+/);
-            const isMatched = skillTokens.some(st => {
-                return tokenSet.has(st) || tokens.some(t => {
-                    return natural.JaroWinklerDistance(t, st) > 0.85;
-                });
-            });
-            if (isMatched) matched++;
+            const cleanSkill = skill.trim();
+            if (!cleanSkill) continue;
+
+            // Use exact word boundary matching for high accuracy
+            // Prevents "C" matching "Cat" or "React" matching "Reaction"
+            const escapedSkill = cleanSkill.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const regex = new RegExp(`\\b${escapedSkill}\\b`, 'i');
+            
+            if (regex.test(text)) {
+                matched++;
+            }
         }
 
         return (matched / requiredSkills.length) * 100;
     }
 
     calculateExperienceMatch(text, requiredExperience) {
-        if (!requiredExperience || requiredExperience === 0) return 70;
+        if (!requiredExperience) requiredExperience = 0;
         
         const expPatterns = [
             /(\d+)\+?\s*(?:years?|yrs?)\s*(?:of)?\s*(?:experience|exp)/gi,
             /experience\s*:?\s*(\d+)\+?\s*(?:years?|yrs?)/gi,
-            /(\d+)\+?\s*(?:years?|yrs?)\s*(?:in|of|working)/gi
+            /(\d+)[\-\s]years?\s*at\s*/gi,
+            /total\s*experience\s*:?\s*(\d+)/gi
         ];
 
         let maxExp = 0;
+        let matchFound = false;
         for (const pattern of expPatterns) {
             let match;
             while ((match = pattern.exec(text)) !== null) {
+                matchFound = true;
                 const exp = parseInt(match[1]);
                 if (exp > maxExp && exp < 50) maxExp = exp;
             }
         }
 
-        if (maxExp === 0) return 30;
+        if (!matchFound) return 0; // Return 0 instead of baseline if none found
         if (maxExp >= requiredExperience) return 100;
         return (maxExp / requiredExperience) * 100;
     }
 
     calculateEducationMatch(text, requiredEducation) {
-        if (!requiredEducation) return 60;
-        
-        const educationLevels = {
-            'phd': 100, 'doctorate': 100, 'ph.d': 100,
-            'master': 90, 'mba': 90, 'mtech': 90, 'ms': 90, 'mca': 90, 'me': 85,
-            'bachelor': 80, 'btech': 80, 'be': 80, 'bca': 75, 'bsc': 75, 'ba': 70, 'bba': 75,
-            'diploma': 60,
-            'higher secondary': 40, '12th': 40, 'hsc': 40,
-            'secondary': 30, '10th': 30, 'sslc': 30
+        // Strict mapping for education
+        const degrees = {
+            phd: ['phd', 'ph.d', 'doctorate', 'doctor of philosophy'],
+            master: ['master', 'mtech', 'm.tech', ' mba ', ' mca ', ' ms ', 'm.e', 'master of'],
+            bachelor: ['bachelor', 'btech', 'b.tech', ' be ', 'b.e', ' bca ', ' bsc ', ' b.sc ', ' ba ', ' b.a ', 'bba', 'degree'],
+            diploma: ['diploma', 'polytechnic'],
+            school: ['school', 'higher secondary', 'hsc', 'sslc', '12th', '10th']
         };
 
-        const reqLevel = requiredEducation.toLowerCase();
-        let reqScore = 50;
-        for (const [key, score] of Object.entries(educationLevels)) {
-            if (reqLevel.includes(key)) { reqScore = score; break; }
-        }
-
-        let candidateScore = 0;
-        for (const [key, score] of Object.entries(educationLevels)) {
-            if (text.includes(key)) {
-                candidateScore = Math.max(candidateScore, score);
+        let candidateLevel = -1;
+        const levels = ['school', 'diploma', 'bachelor', 'master', 'phd'];
+        
+        for (let i = 0; i < levels.length; i++) {
+            const level = levels[i];
+            const keywords = degrees[level];
+            for (const key of keywords) {
+                const regex = key.includes(' ') ? new RegExp(key, 'i') : new RegExp(`\\b${key.trim()}\\b`, 'i');
+                if (regex.test(text)) {
+                    candidateLevel = Math.max(candidateLevel, i);
+                    break;
+                }
             }
         }
 
-        if (candidateScore >= reqScore) return 100;
-        if (candidateScore > 0) return (candidateScore / reqScore) * 100;
-        return 30;
+        if (!requiredEducation) return 50; // Partial score if job education not defined
+        
+        let requiredLevel = 2; // Default to bachelor
+        const reqStr = requiredEducation.toLowerCase();
+        if (reqStr.includes('phd') || reqStr.includes('doctor')) requiredLevel = 4;
+        else if (reqStr.includes('master') || reqStr.includes('mca') || reqStr.includes('mba')) requiredLevel = 3;
+        else if (reqStr.includes('diploma')) requiredLevel = 1;
+        else if (reqStr.includes('school')) requiredLevel = 0;
+
+        if (candidateLevel === -1) return 0;
+        if (candidateLevel >= requiredLevel) return 100;
+        return (candidateLevel / requiredLevel) * 100;
     }
 
     calculateKeywordScore(text, job) {
+        // Only look for job-specific relevant keywords
         const keywords = [
-            ...job.title.toLowerCase().split(/\s+/),
-            ...(job.description ? job.description.toLowerCase().split(/\s+/).filter(w => w.length > 3) : [])
+            ...job.title.toLowerCase().split(/\s+/).filter(w => w.length > 2)
         ];
 
-        const uniqueKeywords = [...new Set(keywords)].filter(k => 
-            !['and', 'the', 'for', 'with', 'that', 'this', 'from', 'have', 'will', 'been', 'more'].includes(k)
-        );
-
-        if (uniqueKeywords.length === 0) return 50;
+        if (keywords.length === 0) return 20;
 
         let matched = 0;
-        for (const keyword of uniqueKeywords) {
-            if (text.includes(keyword)) matched++;
+        for (const keyword of keywords) {
+            const regex = new RegExp(`\\b${keyword}\\b`, 'i');
+            if (regex.test(text)) matched++;
         }
 
-        return (matched / uniqueKeywords.length) * 100;
+        return (matched / keywords.length) * 100;
     }
 
     generateFeedback(skillScore, experienceScore, educationScore, keywordScore) {
+        if (skillScore < 20) return "❌ Skill match is critical. Your technical skills do not align with the job requirements.";
+        if (experienceScore < 30) return "⚠️ Your years of experience appear to be significantly lower than required.";
+        
         const feedbacks = [];
         if (skillScore >= 80) feedbacks.push("Excellent skill match!");
-        else if (skillScore >= 50) feedbacks.push("Good skill match, some gaps noted.");
-        else feedbacks.push("Limited skill match with job requirements.");
-
-        if (experienceScore >= 80) feedbacks.push("Strong experience profile.");
-        else if (experienceScore >= 50) feedbacks.push("Moderate experience level.");
-        else feedbacks.push("Experience may not meet requirements.");
-
-        if (educationScore >= 80) feedbacks.push("Education qualifications met.");
-        else feedbacks.push("Education background could be stronger.");
-
-        return feedbacks.join(' ');
+        else if (skillScore >= 50) feedbacks.push("Good skill alignment.");
+        
+        if (experienceScore >= 80) feedbacks.push("Solid experience profile.");
+        
+        if (educationScore >= 80) feedbacks.push("Education criteria satisfied.");
+        
+        return feedbacks.length > 0 ? feedbacks.join(' ') : "Profile partially matches requirements. Focus on missing skills.";
     }
 
     rankCandidates(candidates, keepCount) {
