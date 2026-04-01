@@ -117,7 +117,6 @@ router.post('/:jobId/submit', protect, async (req, res) => {
         // Score coding questions (AI-powered or local fallback)
         let codeScore = 0;
         let codingTotal = codingQuestions.length;
-        const codeAnswers = req.body.codeAnswers || {};
         for (let i = 0; i < questions.length; i++) {
             const q = questions[i];
             if (q.type === 'coding' && codeAnswers[i]) {
