@@ -8,6 +8,7 @@ const User = require('../models/User');
 const Job = require('../models/Job');
 const RoundResult = require('../models/RoundResult');
 const atsEngine = require('../services/atsEngine');
+const aiService = require('../services/aiService');
 const emailService = require('../services/emailService');
 const router = express.Router();
 
@@ -102,18 +103,46 @@ router.post('/upload/:jobId', protect, upload.single('resume'), async (req, res)
             }
         }
 
-        // ATS Analysis
-        const atsResult = atsEngine.analyzeResume(resumeText, job);
+        // ATS Analysis (AI Driven)
+        let atsResult;
+        let finalSkills = [];
+        let finalExperience = 0;
 
-        // Extract basic info from resume
-        const skills = extractSkills(resumeText);
-        const experience = extractExperience(resumeText);
+        if (aiService.isAvailable) {
+            console.log('🤖 Using AI for Professional ATS Screening...');
+            const aiAts = await aiService.screenResume(resumeText, job.title, job.requiredSkills);
+            
+            if (aiAts) {
+                if (aiAts.isResume === false) {
+                    return res.status(400).json({ 
+                        message: 'The uploaded file does not appear to be a professional resume or CV. Please upload a valid resume.',
+                        feedback: aiAts.feedback || 'Detected as non-resume content (e.g., task description or empty document).'
+                    });
+                }
+                
+                atsResult = {
+                    score: aiAts.score,
+                    details: aiAts.details,
+                    feedback: aiAts.feedback
+                };
+                finalSkills = aiAts.extractedSkills || [];
+                finalExperience = aiAts.experienceYears || 0;
+            }
+        }
+
+        // Fallback to local engine if AI failed or not available
+        if (!atsResult) {
+            console.log('⚠️ AI ATS unavailable, using local engine fallback.');
+            atsResult = atsEngine.analyzeResume(resumeText, job);
+            finalSkills = extractSkills(resumeText);
+            finalExperience = extractExperience(resumeText);
+        }
 
         // Update user
         user.resumeFile = req.file.filename;
         user.resumeData = {
-            skills,
-            experience,
+            skills: finalSkills,
+            experience: finalExperience,
             rawText: resumeText.substring(0, 5000),
             score: atsResult.score
         };

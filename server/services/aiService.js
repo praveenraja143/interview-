@@ -343,6 +343,57 @@ Return ONLY valid JSON. No markdown.
         }
         return null;
     }
+
+    // ==========================================
+    // AI ATS: SCREEN RESUME & VALIDATE
+    // ==========================================
+    async screenResume(resumeText, jobTitle, jobSkills) {
+        if (!this.isAvailable) return null;
+
+        const prompt = `You are a professional ATS (Applicant Tracking System). Evaluate if the following text is a genuine resume/CV for a job application.
+
+Job Title: "${jobTitle}"
+Required Skills: ${jobSkills.join(', ')}
+
+Resume Text:
+"""
+${resumeText.substring(0, 8000)}
+"""
+
+Tasks:
+1. Determine if this text is actually a personal resume/CV. If it's a task description, a generic document, or blank, set isResume: false.
+2. If isResume is true, evaluate the candidate based on:
+   - Skill Match (0-100): Alignment with required skills.
+   - Experience Match (0-100): Total years and relevance of professional history.
+   - Professionalism (0-100): Formatting, clarity, and language.
+   - Potential (0-100): Extra points for certifications, projects, or education.
+3. Calculate an overallScore (0-100).
+4. Extract key skills found in the resume.
+5. Provide a summary feedback (1-2 sentences).
+
+Return ONLY valid JSON. No markdown.
+{
+  "isResume": true,
+  "score": 85,
+  "details": {
+    "skillMatch": 90,
+    "experienceMatch": 80,
+    "professionalism": 85,
+    "potential": 85
+  },
+  "extractedSkills": ["React", "Node.js", "MongoDB"],
+  "experienceYears": 3,
+  "feedback": "Strong candidate with relevant technical skills and clear professional background."
+}`;
+
+        const text = await this._ask(prompt);
+        const analysis = this._parseJSON(text, 'object');
+
+        if (analysis && analysis.score !== undefined) {
+            return analysis;
+        }
+        return null;
+    }
 }
 
 module.exports = new AIService();
