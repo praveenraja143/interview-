@@ -121,21 +121,15 @@ router.post('/:id/advance', protect, adminOnly, async (req, res) => {
                         if (userToUpdate) {
                             const appliedJob = userToUpdate.appliedJobs.find(j => j.jobId.toString() === job._id.toString());
                             if (appliedJob) {
-                                if (item.passed) {
-                                    appliedJob.status = `${round}_passed`;
-                                    appliedJob.currentRound = nextRound;
-                                    appliedJob.scores[round] = item.score;
-                                } else {
-                                    appliedJob.status = `${round}_failed`;
-                                    appliedJob.scores[round] = item.score;
-                                }
-                                await userToUpdate.save();
-                                console.log(`🧑‍💻 Advanced user ${userToUpdate.name} (${item.userId}) to ${item.passed ? 'passed' : 'failed'} for ${round}`);
+                                appliedJob.status = item.passed ? `${round}_passed` : `${round}_failed`;
+                                appliedJob.currentRound = item.passed ? nextRound : round;
+                                appliedJob.scores[round] = item.score;
+                                userToUpdate.markModified('appliedJobs');
                             }
-                        }
+                            await userToUpdate.save();
+                            console.log(`🧑‍💻 Advanced user ${userToUpdate.name} (${item.userId}) to ${item.passed ? 'passed' : 'failed'} for ${round}`);
 
-                        // Send email to candidate
-                        if (userToUpdate) {
+                            // Send email to candidate
                             await emailService.sendRoundResult(userToUpdate, job.title, round, item.passed, item.score,
                                 item.passed ? 'Congratulations! You have qualified for the next round.' : 'Thank you for your participation.');
                         }
@@ -156,6 +150,7 @@ router.post('/:id/advance', protect, adminOnly, async (req, res) => {
                     if (app) {
                         app.status = `${round}_failed`; // Treat as failed if they missed the test
                         app.feedback = 'Did not complete the evaluation round.';
+                        u.markModified('appliedJobs');
                         await u.save();
                     }
                 }
@@ -171,6 +166,7 @@ router.post('/:id/advance', protect, adminOnly, async (req, res) => {
                     if (app) {
                         app.currentRound = nextRound;
                         app.status = `${round}_passed`;
+                        u.markModified('appliedJobs');
                         await u.save();
                     }
                 }
@@ -256,6 +252,7 @@ router.post('/:id/process-round', protect, adminOnly, async (req, res) => {
                         appliedJob.status = `${round}_failed`;
                         appliedJob.scores[round] = item.score;
                     }
+                    userToUpdate.markModified('appliedJobs');
                     await userToUpdate.save();
                 }
             }
@@ -299,7 +296,10 @@ router.get('/:id/stats', protect, adminOnly, async (req, res) => {
             const roundIndex = roundOrder.indexOf(round);
             const currentRoundIndex = roundOrder.indexOf(job.currentRound);
 
-            const passed = results.filter(r => r.passed || (roundIndex === currentRoundIndex && (r.score || 0) >= 50)).length;
+            const passed = results.filter(r => 
+                r.passed === true || (r.passed === undefined && (r.score || 0) >= 50)
+            ).length;
+            
             let failed = 0;
             let pending = 0;
 
@@ -307,9 +307,11 @@ router.get('/:id/stats', protect, adminOnly, async (req, res) => {
                 // This is a past round - anyone who didn't pass failed
                 failed = results.length - passed;
             } else if (roundIndex === currentRoundIndex) {
-                // This is the current round - anyone who didn't pass the threshold is failed
-                failed = results.filter(r => r.passed === false || (r.score !== undefined && r.score < 50)).length;
-                pending = results.length - (passed + failed);
+                // This is the current round
+                failed = results.filter(r => 
+                    r.passed === false || (r.passed === undefined && r.score !== undefined && r.score < 50)
+                ).length;
+                pending = Math.max(0, results.length - (passed + failed));
             } else {
                 // Future round - everything is pending
                 pending = results.length;
